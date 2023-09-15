@@ -3,7 +3,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 
 # 8647 time step
@@ -48,10 +47,10 @@ def display_csv_size():
         num_rows, num_columns = df.shape
         print(file_name, ' : ', num_rows, ' x ', num_columns)
 
-def preprocess_dataset(): 
+def linear_regression(dataset_name): 
     # read speed matrix data
     data_core_csv = pd.read_csv(URBAN_CORE_CSV, header=None) 
-    data_mix_csv = pd.read_csv(URBAN_MIX_CSV, header=None) 
+    data_mix_csv = pd.read_csv(URBAN_MIX_CSV, header=None)
 
     # speed timestep start from column 8
     # omit column 1 - 7 
@@ -88,7 +87,7 @@ def preprocess_dataset():
     model.fit(X_train, Y_train)
 
     # Make predictions on the test data
-    Y_pred = model.predict(X_test)
+    Y_pred = pd.Series(model.predict(X_test), index= X_test.index)
 
     # Evaluate the model's performance
     mse = mean_squared_error(Y_test, Y_pred)
@@ -110,9 +109,8 @@ def preprocess_dataset():
     ax1.set_ylabel("Speed")
     ax1.legend()
   
-    Y_pred_df = pd.DataFrame(Y_pred)
     ax2.plot(X_test.index, X_test['Lag_1'], label='test data',  linewidth=1.0, color='blue')  
-    ax2.plot(X_test.index, Y_pred_df, label = 'prediction data',  linewidth=1.0, color='red')  
+    ax2.plot(Y_pred.index, Y_pred, label = 'prediction data',  linewidth=1.0, color='red')  
     ax2.set_xlabel("Time Step")
     ax2.set_ylabel("Speed")
     ax2.legend()
@@ -120,8 +118,8 @@ def preprocess_dataset():
     plt.show()
 
 
+
 # display_csv_size()
 # data_highlight_graph()
 # test()
-preprocess_dataset()
-# linear_regression()
+linear_regression()
