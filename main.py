@@ -55,49 +55,31 @@ def preprocess_dataset():
 
     # speed timestep start from column 8
     # omit column 1 - 7 
-    data_core_csv = data_core_csv.drop(data_core_csv.columns[0:7], axis=1)
+    data_core_csv = data_core_csv.drop(data_core_csv.columns[0:7], axis=1).reset_index(drop=True)
 
-    # take first row for example
-    data_core_csv_train = data_core_csv.iloc[0]
+    # Calculate the average of each column
+    column_averages = data_core_csv.mean().to_frame('Mean')
 
-    # Define the number of columns per row
-    columns_per_row = 5
-    num_columns = 8640
+    # add lag
+    column_averages['Lag_1'] = column_averages['Mean'].shift(12)
 
-    # Calculate the number of resulting rows
-    num_rows = num_columns // columns_per_row
+    X = column_averages.loc[:, ['Lag_1']].reset_index(drop=True)
+    X.dropna(inplace=True)  # drop missing values in the feature set
+    Y = column_averages.loc[:, 'Mean'].reset_index(drop=True)  # create the target
+    Y, X = Y.align(X, join='inner')  # drop corresponding values in target
 
-    # Create a new DataFrame with the desired shape
-    new_df = pd.DataFrame(np.reshape(data_core_csv_train.values, (num_rows, columns_per_row)))
+    num_train_rows = 6048
+    # Select the rows for the training independent variable set
+    X_train = X.iloc[:num_train_rows].reset_index(drop=True)
 
-    # Optionally, you can reset the index of the new DataFrame
-    new_df.reset_index(drop=True, inplace=True)
+    # Select the rows for the test independent variable set (remaining rows)
+    X_test = X.iloc[num_train_rows:].reset_index(drop=True)
 
-    # Display the resulting DataFrame
-    print(data_core_csv_train)
-    print(new_df)
+    # Select the rows for the training dependent variable set
+    Y_train = Y.iloc[:num_train_rows].reset_index(drop=True)
 
-    
-
-
-
-# LINEAR REGRESSION
-def linear_regression():
-    # read speed matrix data
-    data_core_csv = pd.read_csv(URBAN_CORE_CSV, header=None) 
-    data_mix_csv = pd.read_csv(URBAN_MIX_CSV, header=None) 
-
-    last_column_index = -1
-    Y = data_core_csv.iloc[:, last_column_index]
-    
-    # PREPROCESS dataset
-    X_train, X_temp, Y_train, Y_temp = train_test_split(data_core_csv, Y, test_size=0.3, random_state=42)
-    X_test, X_validation, Y_test, Y_validation = train_test_split(X_temp, Y_temp, test_size=0.5, random_state=42)
-
-    # Print the sizes of the sets
-    print("Training set size:", len(X_train))
-    print("Testing set size:", len(X_test))
-    print("Validation set size:", len(X_validation))
+    # Select the rows for the test dependent variable set (remaining rows)
+    Y_test = Y.iloc[num_train_rows:].reset_index(drop=True)
 
     # Create a linear regression model
     model = LinearRegression()
@@ -119,34 +101,26 @@ def linear_regression():
     print("Mean Squared Error (MSE):", mse)
     print("R-squared (R2):", r2)
 
-    # Create subplots
-    plt.figure(figsize=(12, 5))
+    # Plot original dataset
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 
-    # Plot the predicted vs. actual values
-    plt.subplot(1, 2, 1)
-    plt.scatter(Y_test, Y_pred)
-    plt.xlabel("Actual Values")
-    plt.ylabel("Predicted Values")
-    plt.title("Actual vs. Predicted Values")
-
-    # Plot the original data points
-    plt.subplot(1, 2, 2)
-    print(len(Y))
-    plt.scatter(data_core_csv, Y, label="Original Data", color="blue")
-
-    # Plot the linear regression line
-    plt.plot(data_core_csv, Y_pred, label="Linear Regression Line", color="red")
-
-    # Add labels and legend
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.legend()
+    ax1.plot(column_averages.index, column_averages['Mean'], linewidth=1.0, color='blue', label='Data value')  
+    ax1.plot(column_averages.index, column_averages['Lag_1'], linewidth=1.0, color='red', label='Previous time step')  
+    ax1.set_xlabel("Time Step")
+    ax1.set_ylabel("Speed")
+    ax1.legend()
+  
+    Y_pred_df = pd.DataFrame(Y_pred)
+    ax2.plot(X_test.index, X_test['Lag_1'], label='test data',  linewidth=1.0, color='blue')  
+    ax2.plot(X_test.index, Y_pred_df, label = 'prediction data',  linewidth=1.0, color='red')  
+    ax2.set_xlabel("Time Step")
+    ax2.set_ylabel("Speed")
+    ax2.legend()
 
     plt.show()
 
 
-
-display_csv_size()
+# display_csv_size()
 # data_highlight_graph()
 # test()
 preprocess_dataset()
