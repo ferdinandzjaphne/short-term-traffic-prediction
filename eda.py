@@ -18,10 +18,13 @@ def eda(file_name):
     df = pd.read_csv(file_name, header=None) 
 
     max_speed = df.iloc[:, 7:].values.max()
-    max_speed = df.iloc[:, 7:].values.mean()
+    min_speed = df.iloc[:, 7:].values.min()
+    avg = df.iloc[:, 7:].values.mean()
     print(file_name)
     print("max speed: ", max_speed)
-    print("average speed: ", max_speed)
+    print("average speed: ", avg)
+    print("min speed: ", min_speed)
+
 
     transposed_df = df.transpose()
 
