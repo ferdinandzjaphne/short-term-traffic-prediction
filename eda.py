@@ -1,6 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
+import seaborn as sns
 
 
 # 8647 time step
@@ -16,6 +16,9 @@ ADJ_URBAN_MIX_CSV = 'Adj(urban-mix).csv'
 
 def eda(file_name):
     df = pd.read_csv(file_name, header=None) 
+
+    max_speed = df.values.max()
+    print("max speed: ", max_speed)
 
     transposed_df = df.transpose()
 
@@ -34,13 +37,17 @@ def eda(file_name):
     axes[1].set_ylabel('Speed')
     axes[1].legend()
 
-    axes[2].boxplot(column_averages)
+    axes[2].boxplot(df.iloc[:3, 7:100])
     axes[2].legend()
 
-    plt.savefig('eda.png')
+    # Correlation Matrix
+    # print(transposed_df[7:][:1])
+    # correlation_matrix = transposed_df[7:][:1].corr(method='pearson')
+    # sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', linewidths=0.5)
+
+    plt.savefig('eda-pic.png')
     plt.show()
 
 
 eda(URBAN_CORE_CSV)
 eda(URBAN_MIX_CSV)
-
