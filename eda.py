@@ -15,7 +15,7 @@ URBAN_MIX_CSV = 'urban-mix.csv'
 ADJ_URBAN_MIX_CSV = 'Adj(urban-mix).csv'
 
 def eda(file_name):
-    df = pd.read_csv(URBAN_CORE_CSV, header=None) 
+    df = pd.read_csv(file_name, header=None) 
 
     transposed_df = df.transpose()
 
