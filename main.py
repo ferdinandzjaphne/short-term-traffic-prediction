@@ -1,7 +1,6 @@
 import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 
@@ -47,7 +46,7 @@ def display_csv_size():
         num_rows, num_columns = df.shape
         print(file_name, ' : ', num_rows, ' x ', num_columns)
 
-def linear_regression(dataset_name): 
+def linear_regression(): 
     # read speed matrix data
     data_core_csv = pd.read_csv(URBAN_CORE_CSV, header=None) 
     data_mix_csv = pd.read_csv(URBAN_MIX_CSV, header=None)
@@ -55,6 +54,12 @@ def linear_regression(dataset_name):
     # speed timestep start from column 8
     # omit column 1 - 7 
     data_core_csv = data_core_csv.drop(data_core_csv.columns[0:7], axis=1).reset_index(drop=True)
+
+    # Check if there are any zero values in the entire DataFrame
+    if (data_core_csv == 0).any().any():
+        print("There are zero values in the DataFrame.")
+    else:
+        print("There are no zero values in the DataFrame.")
 
     # Calculate the average of each column
     column_averages = data_core_csv.mean().to_frame('Mean')
@@ -67,7 +72,7 @@ def linear_regression(dataset_name):
     Y = column_averages.loc[:, 'Mean'].reset_index(drop=True)  # create the target
     Y, X = Y.align(X, join='inner')  # drop corresponding values in target
 
-    num_train_rows = 6048
+    num_train_rows = 6048 # 21 days
     # Select the rows for the training independent variable set
     X_train = X.iloc[:num_train_rows].reset_index(drop=True)
 
@@ -101,25 +106,27 @@ def linear_regression(dataset_name):
     print("R-squared (R2):", r2)
 
     # Plot original dataset
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+    _, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 
     ax1.plot(column_averages.index, column_averages['Mean'], linewidth=1.0, color='blue', label='Data value')  
     ax1.plot(column_averages.index, column_averages['Lag_1'], linewidth=1.0, color='red', label='Previous time step')  
     ax1.set_xlabel("Time Step")
     ax1.set_ylabel("Speed")
     ax1.legend()
+
   
     ax2.plot(X_test.index, X_test['Lag_1'], label='test data',  linewidth=1.0, color='blue')  
     ax2.plot(Y_pred.index, Y_pred, label = 'prediction data',  linewidth=1.0, color='red')  
     ax2.set_xlabel("Time Step")
     ax2.set_ylabel("Speed")
     ax2.legend()
+    plt.savefig('Prediction & Test Dataset Comparison', bbox_inches='tight', dpi=300)
 
     plt.show()
 
 
 
-# display_csv_size()
+display_csv_size()
 # data_highlight_graph()
 # test()
 linear_regression()
