@@ -14,10 +14,10 @@ ADJ_URBAN_CORE_CSV = 'Adj(urban-core).csv'
 URBAN_MIX_CSV = 'urban-mix.csv'
 ADJ_URBAN_MIX_CSV = 'Adj(urban-mix).csv'
 
-def eda():
-    data_core_csv = pd.read_csv(URBAN_CORE_CSV, header=None) 
+def eda(file_name):
+    df = pd.read_csv(URBAN_CORE_CSV, header=None) 
 
-    transposed_df = data_core_csv.transpose()
+    transposed_df = df.transpose()
 
     column_averages = transposed_df[7:].mean(axis=1).reset_index(drop=True)
 
@@ -41,5 +41,6 @@ def eda():
     plt.show()
 
 
-eda()
+eda(URBAN_CORE_CSV)
+eda(URBAN_MIX_CSV)
 

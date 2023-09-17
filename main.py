@@ -46,23 +46,22 @@ def display_csv_size():
         num_rows, num_columns = df.shape
         print(file_name, ' : ', num_rows, ' x ', num_columns)
 
-def linear_regression(): 
+def linear_regression(dataset_name): 
     # read speed matrix data
-    data_core_csv = pd.read_csv(URBAN_CORE_CSV, header=None) 
-    data_mix_csv = pd.read_csv(URBAN_MIX_CSV, header=None)
+    df = pd.read_csv(dataset_name, header=None) 
 
     # speed timestep start from column 8
     # omit column 1 - 7 
-    data_core_csv = data_core_csv.drop(data_core_csv.columns[0:7], axis=1).reset_index(drop=True)
+    df = df.drop(df.columns[0:7], axis=1).reset_index(drop=True)
 
     # Check if there are any zero values in the entire DataFrame
-    if (data_core_csv == 0).any().any():
+    if (df == 0).any().any():
         print("There are zero values in the DataFrame.")
     else:
         print("There are no zero values in the DataFrame.")
 
     # Calculate the average of each column
-    column_averages = data_core_csv.mean().to_frame('Mean')
+    column_averages = df.mean().to_frame('Mean')
 
     # add lag
     column_averages['Lag_1'] = column_averages['Mean'].shift(12)
@@ -129,4 +128,5 @@ def linear_regression():
 display_csv_size()
 # data_highlight_graph()
 # test()
-linear_regression()
+linear_regression(URBAN_CORE_CSV)
+linear_regression(URBAN_MIX_CSV)
