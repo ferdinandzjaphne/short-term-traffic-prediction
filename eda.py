@@ -18,7 +18,10 @@ def eda(file_name):
     df = pd.read_csv(file_name, header=None) 
 
     max_speed = df.iloc[:, 7:].values.max()
+    max_speed = df.iloc[:, 7:].values.mean()
+    print(file_name)
     print("max speed: ", max_speed)
+    print("average speed: ", max_speed)
 
     transposed_df = df.transpose()
 
@@ -38,12 +41,15 @@ def eda(file_name):
     axes[1].legend()
 
     axes[2].boxplot(df.iloc[:3, 7:100])
+    axes[2].set_xlabel('Time Step')
+    axes[2].set_ylabel('Speed')
     axes[2].legend()
 
     # Correlation Matrix
     # print(transposed_df[7:][:1])
     # correlation_matrix = transposed_df[7:][:1].corr(method='pearson')
     # sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', linewidths=0.5)
+    plt.subplots_adjust(left=0.1, right=0.9, bottom=0.1, top=0.9, wspace=0.9)
 
     plt.savefig('eda-pic.png')
     plt.show()
