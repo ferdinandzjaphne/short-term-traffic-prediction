@@ -17,7 +17,7 @@ ADJ_URBAN_MIX_CSV = 'Adj(urban-mix).csv'
 def eda(file_name):
     df = pd.read_csv(file_name, header=None) 
 
-    max_speed = df.values.max()
+    max_speed = df.iloc[:, 7:].values.max()
     print("max speed: ", max_speed)
 
     transposed_df = df.transpose()
