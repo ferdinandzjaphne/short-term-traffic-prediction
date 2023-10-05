@@ -1,18 +1,12 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
+from main import URBAN_MIX_CSV, URBAN_CORE_CSV
 
-
-# 8647 time step
+# 8640 time step
 # 5 minute interval
-# total 43235 minutes
-# 720.583333333 hours 
-# 30.0243055555 days
-
-URBAN_CORE_CSV = 'urban-core.csv'
-ADJ_URBAN_CORE_CSV = 'Adj(urban-core).csv'
-URBAN_MIX_CSV = 'urban-mix.csv'
-ADJ_URBAN_MIX_CSV = 'Adj(urban-mix).csv'
+# total 43200 minutes
+# 720 hours 
+# 30 days
 
 def eda(file_name):
     df = pd.read_csv(file_name, header=None) 
@@ -56,7 +50,6 @@ def eda(file_name):
 
     plt.savefig('eda-pic.png')
     plt.show()
-
 
 eda(URBAN_CORE_CSV)
 eda(URBAN_MIX_CSV)

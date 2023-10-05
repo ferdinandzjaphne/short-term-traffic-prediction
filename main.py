@@ -4,14 +4,15 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 
-# 8647 time step
+# 8640 time step
 # 5 minute interval
-# total 43235 minutes
-# 720.583333333 hours 
-# 30.0243055555 days
+# total 43200 minutes
+# 720 hours 
+# 30 days
 
 # dataset starts from 12 AM april 1st to 11.55 PM of 30 April
 
+global URBAN_CORE_CSV, ADJ_URBAN_CORE_CSV, URBAN_MIX_CSV, ADJ_URBAN_MIX_CSV
 URBAN_CORE_CSV = 'urban-core.csv'
 ADJ_URBAN_CORE_CSV = 'Adj(urban-core).csv'
 URBAN_MIX_CSV = 'urban-mix.csv'
@@ -124,9 +125,7 @@ def linear_regression(dataset_name):
     plt.show()
 
 
-
-display_csv_size()
-# data_highlight_graph()
-# test()
-linear_regression(URBAN_CORE_CSV)
-linear_regression(URBAN_MIX_CSV)
+if __name__ == "__main__":
+    display_csv_size()
+    linear_regression(URBAN_CORE_CSV)
+    linear_regression(URBAN_MIX_CSV)
