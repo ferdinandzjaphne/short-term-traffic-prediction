@@ -16,3 +16,6 @@ __pycache__/
 # Ignore csv & xlsx files
 .csv/
 .xlsx/
+
+# Ignore png files
+.png/
