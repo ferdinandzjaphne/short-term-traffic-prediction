@@ -7,8 +7,7 @@ import os
 import cv2
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Reshape
-from tensorflow.keras.losses import SparseCategoricalCrossentropy
-
+from tensorflow.keras.metrics import Precision, Recall
 
 
 def show_image_representation(file_name): 
@@ -58,6 +57,8 @@ def load_dataset():
         
         # Load original via OpenCV, so we can draw on it and display it on our screen
         original = cv2.imread(file)
+        
+        original = original/255
 
         Y_train.append(original)
 
@@ -69,6 +70,8 @@ def load_dataset():
         # Load original via OpenCV, so we can draw on it and display it on our screen
         original = cv2.imread(file)
 
+        original = original/255
+
         X_val.append(original)
 
     files = os.listdir(output_folder_Y_val)
@@ -79,15 +82,16 @@ def load_dataset():
         # Load original via OpenCV, so we can draw on it and display it on our screen
         original = cv2.imread(file)
 
+        original = original/255
+
         Y_val.append(original)
     
-    print(X_train[0])
     return np.array(X_train), np.array(Y_train), np.array(X_val), np.array(Y_val)
 
 def train_cnn(file_name):
     X_train, Y_train, X_val, Y_val = load_dataset()
 
-    input_shape=(304,6,3)
+    input_shape=(304,6,3) 
 
     model = Sequential()
    
@@ -96,8 +100,8 @@ def train_cnn(file_name):
     model.add(MaxPooling2D((2, 2)))
 
     # Layer 2: Convolutional Layer
-    # model.add(Conv2D(32, (3, 3), activation='relu'))
-    # model.add(MaxPooling2D((2, 2)))
+    # model.add(Conv2D(32, (2, 2), activation='relu'))
+    # model.add(MaxPooling2D((1, 1)))
 
     # Layer 3: Convolutional Layer
     # model.add(Conv2D(16, (3, 3), activation='relu'))
@@ -114,9 +118,63 @@ def train_cnn(file_name):
 
     model.summary()
 
-    model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+    metrics=['accuracy',
+               	Precision(name='precision'),
+               	Recall(name='recall')]
 
-    history = model.fit(X_train, Y_train, epochs=100, validation_data =(X_val, Y_val))
+    model.compile(optimizer='adam', loss='mean_squared_error', metrics=metrics)
+
+    history = model.fit(X_train, Y_train, epochs=50, validation_data =(X_val, Y_val))
+    train_perf = history.history[str('accuracy')]
+    validation_perf = history.history['val_accuracy']
+    intersection_idx = np.argwhere(np.isclose(train_perf,
+                                                validation_perf, atol=1e-2)).flatten()[0]
+    intersection_value = train_perf[intersection_idx]
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(2, 2, 1)  # 2 rows, 2 columns, subplot 1
+    ax1.set_title('Accuracy')
+    ax1.plot(train_perf, label='accuracy')
+    ax1.plot(validation_perf, label = 'val_'+str('accuracy'))
+    ax1.axvline(x=intersection_idx, color='r', linestyle='--', label='Intersection')
+
+    ax1.annotate(f'Optimal Value: {intersection_value:.4f}',
+            xy=(intersection_idx, intersection_value),
+            xycoords='data',
+            fontsize=10,
+            color='green')
+                    
+    ax1.set_xlabel('Epoch')
+    ax1.set_ylabel('accuracy')
+    ax1.legend(loc='lower right')
+
+
+    # Access the MSE values from the training history
+    mse_values = history.history['loss']  # Change 'loss' to the appropriate metric name if needed
+    val_mse_values = history.history['val_loss']  # If you have validation data
+
+    # Plot the MSE values
+    epochs = range(1, len(mse_values) + 1)
+
+    ax2 = fig.add_subplot(2, 2, 2)  # 2 rows, 2 columns, subplot 2
+    ax2.plot(epochs, mse_values, 'b', label='Training MSE')
+    ax2.set_xlabel('Epochs')
+    ax2.set_ylabel('MSE')
+    ax2.set_title('Training Mean Squared Error')
+    ax2.legend()
+
+    ax3 = fig.add_subplot(2, 2, 3)  # 2 rows, 2 columns, subplot 3
+    # Optionally, plot validation MSE values if available
+    if 'val_loss' in history.history:
+        ax3.plot(epochs, val_mse_values, 'r', label='Validation MSE')
+        ax3.set_xlabel('Epochs')
+        ax3.set_ylabel('MSE')
+        ax3.set_title('Validation Mean Squared Error')
+        ax3.legend()
+    fig.tight_layout()
+
+    plt.show()
+
 
 def generate_image_dataset(file_name):
     df = pd.read_csv(file_name, header=None) 
