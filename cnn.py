@@ -91,30 +91,33 @@ def load_dataset():
 def train_cnn(file_name):
     X_train, Y_train, X_val, Y_val = load_dataset()
 
-    input_shape=(304,6,3) 
+    input_shape=(304,180,3) 
 
     model = Sequential()
    
-    # Layer 1: Convolutional Layer
-    model.add(Conv2D(64, (3, 3), activation='relu', input_shape=input_shape))
+    # Layer 1: Convolutional Layer with 256 filters and ReLU activation
+    model.add(Conv2D(256, (3, 3), activation='relu', input_shape= input_shape))
+
+    # Layer 2: MaxPooling Layer
     model.add(MaxPooling2D((2, 2)))
 
-    # Layer 2: Convolutional Layer
-    # model.add(Conv2D(32, (2, 2), activation='relu'))
-    # model.add(MaxPooling2D((1, 1)))
+    # Layer 3: Convolutional Layer with 128 filters and ReLU activation
+    model.add(Conv2D(128, (3, 3), activation='relu'))
 
-    # Layer 3: Convolutional Layer
-    # model.add(Conv2D(16, (3, 3), activation='relu'))
-    # model.add(MaxPooling2D((2, 2)))
+    # Layer 4: MaxPooling Layer
+    model.add(MaxPooling2D((2, 2)))
+
+    # Layer 5: Convolutional Layer with 64 filters and ReLU activation
+    model.add(Conv2D(64, (3, 3), activation='relu'))
 
     # Layer 4: Flatten
     model.add(Flatten())
 
     # Layer 6: Fully Connected Layer with output shape (304*2)
-    model.add(Dense(304 * 2 * 3))
+    model.add(Dense(304 * 12 * 3))
 
     # Reshape the output to the desired shape (304, 2)
-    model.add(Reshape((304, 2, 3)))
+    model.add(Reshape((304, 12, 3)))
 
     model.summary()
 
@@ -125,6 +128,11 @@ def train_cnn(file_name):
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=metrics)
 
     history = model.fit(X_train, Y_train, epochs=50, validation_data =(X_val, Y_val))
+
+    show_training_result(history)
+    
+
+def show_training_result(history):
     train_perf = history.history[str('accuracy')]
     validation_perf = history.history['val_accuracy']
     intersection_idx = np.argwhere(np.isclose(train_perf,
@@ -175,7 +183,6 @@ def train_cnn(file_name):
 
     plt.show()
 
-
 def generate_image_dataset(file_name):
     df = pd.read_csv(file_name, header=None) 
     df = df.drop(df.columns[0:7], axis=1).reset_index(drop=True)
@@ -184,15 +191,15 @@ def generate_image_dataset(file_name):
     num_val_rows = 576 # 2 days
     num_test_rows = 2016 # 7 days
 
-    num_X = 6
-    num_Y = 2
+    num_X = 180 # 1 day
+    num_Y = 12
 
     train_dataset = df.iloc[:, 0:num_train_rows].reset_index(drop=True)
     validate_dataset = df.iloc[:, num_train_rows:num_train_rows+num_val_rows].reset_index(drop=True)
     test_dataset = df.iloc[:, num_train_rows+num_val_rows:num_train_rows+num_val_rows+num_test_rows].reset_index(drop=True)
 
     # Define the number of columns per row
-    columns_per_row = 8 # 8 time steps, 40 minutes
+    columns_per_row = 192 # 8 time steps, 40 minutes
 
     output_folder_X_train= 'output_folder_X_train'
     output_folder_Y_train = 'output_folder_Y_train'
