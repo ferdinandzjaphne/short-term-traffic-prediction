@@ -91,7 +91,7 @@ def load_dataset():
 def train_cnn(file_name):
     X_train, Y_train, X_val, Y_val = load_dataset()
 
-    input_shape=(304,180,3) 
+    input_shape=(304,180,3)
 
     model = Sequential()
    
