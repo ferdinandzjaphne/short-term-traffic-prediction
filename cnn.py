@@ -5,9 +5,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import cv2
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Reshape
+from tensorflow.keras.models import Sequential, load_model, Model
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Reshape,GlobalAveragePooling2D
 from tensorflow.keras.metrics import Precision, Recall
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import ModelCheckpoint
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, mean_squared_error
+
+
+num_train_rows = 6048 # 21 days
+num_val_rows = 576 # 2 days
+num_test_rows = 2016 # 7 days
+
+num_X = 20 
+num_Y = 12
+
+# Define the number of columns per row
+columns_per_row = 32
 
 
 def show_image_representation(file_name): 
@@ -30,15 +44,19 @@ def show_image_representation(file_name):
     plt.imshow(img_test)
     plt.show()
 
-def load_dataset():
-    output_folder_X_train= 'output_folder_X_train'
-    output_folder_Y_train = 'output_folder_Y_train'
-    output_folder_X_val = 'output_folder_X_val'
-    output_folder_Y_val = 'output_folder_Y_val'
+def load_dataset(file_name):
+    output_folder_X_train= 'output_folder_X_train_'  + file_name
+    output_folder_Y_train = 'output_folder_Y_train_' + file_name
+    output_folder_X_val = 'output_folder_X_val_' + file_name
+    output_folder_Y_val = 'output_folder_Y_val_' + file_name
+    output_folder_X_test = 'output_folder_X_test_' + file_name
+    output_folder_Y_test = 'output_folder_Y_test_' + file_name
     X_train = []
     Y_train = []
     X_val = []
     Y_val = []
+    X_test = []
+    Y_test = []
 
     files = os.listdir(output_folder_X_train)
     for filename in files:
@@ -49,7 +67,6 @@ def load_dataset():
         original = cv2.imread(file)
         X_train.append(original)
 
-
     files = os.listdir(output_folder_Y_train)
     for filename in files:
         # Passing the entire path of the image file
@@ -57,9 +74,6 @@ def load_dataset():
         
         # Load original via OpenCV, so we can draw on it and display it on our screen
         original = cv2.imread(file)
-        
-        original = original/255
-
         Y_train.append(original)
 
     files = os.listdir(output_folder_X_val)
@@ -69,9 +83,6 @@ def load_dataset():
         
         # Load original via OpenCV, so we can draw on it and display it on our screen
         original = cv2.imread(file)
-
-        original = original/255
-
         X_val.append(original)
 
     files = os.listdir(output_folder_Y_val)
@@ -81,17 +92,32 @@ def load_dataset():
         
         # Load original via OpenCV, so we can draw on it and display it on our screen
         original = cv2.imread(file)
-
-        original = original/255
-
         Y_val.append(original)
+
+    files = os.listdir(output_folder_X_test)
+    for filename in files:
+        # Passing the entire path of the image file
+        file = os.path.join(output_folder_X_test, filename)
+        
+        # Load original via OpenCV, so we can draw on it and display it on our screen
+        original = cv2.imread(file)
+        X_test.append(original)
+
+    files = os.listdir(output_folder_Y_test)
+    for filename in files:
+        # Passing the entire path of the image file
+        file = os.path.join(output_folder_Y_test, filename)
+        
+        # Load original via OpenCV, so we can draw on it and display it on our screen
+        original = cv2.imread(file)
+        Y_test.append(original)
     
-    return np.array(X_train), np.array(Y_train), np.array(X_val), np.array(Y_val)
+    return np.array(X_train), np.array(Y_train), np.array(X_val), np.array(Y_val), np.array(X_test), np.array(Y_test)
 
 def train_cnn(file_name):
-    X_train, Y_train, X_val, Y_val = load_dataset()
+    X_train, Y_train, X_val, Y_val, _, _ = load_dataset(file_name)
 
-    input_shape=(304,180,3)
+    input_shape=(304,num_X,3)
 
     model = Sequential()
    
@@ -110,14 +136,16 @@ def train_cnn(file_name):
     # Layer 5: Convolutional Layer with 64 filters and ReLU activation
     model.add(Conv2D(64, (3, 3), activation='relu'))
 
-    # Layer 4: Flatten
+    # Layer 6: MaxPooling Layer
+    # model.add(MaxPooling2D((2, 2)))
+
+    # Layer 7: Flatten
     model.add(Flatten())
 
-    # Layer 6: Fully Connected Layer with output shape (304*2)
-    model.add(Dense(304 * 12 * 3))
+    # Layer 8: Fully Connected Layer with output shape (304*2)
+    model.add(Dense(304 * num_Y * 3))
 
-    # Reshape the output to the desired shape (304, 2)
-    model.add(Reshape((304, 12, 3)))
+    model.add(Reshape((304, num_Y, 3)))
 
     model.summary()
 
@@ -125,12 +153,82 @@ def train_cnn(file_name):
                	Precision(name='precision'),
                	Recall(name='recall')]
 
-    model.compile(optimizer='adam', loss='mean_squared_error', metrics=metrics)
+    opt = Adam(learning_rate=0.001)
 
-    history = model.fit(X_train, Y_train, epochs=50, validation_data =(X_val, Y_val))
+    model.compile(optimizer=opt, loss='mean_squared_error', metrics=metrics)
+
+    checkpoint_callback = ModelCheckpoint("best_model.h5", monitor='val_loss', save_best_only=True, mode='min', verbose=1)
+
+    history = model.fit(X_train, Y_train, epochs=80, validation_data =(X_val, Y_val), callbacks=[checkpoint_callback])
+    best_val_loss = min(history.history['val_loss'])
+    print('best val loss: ', best_val_loss)
+
+    model.save('best_model.h5')
 
     show_training_result(history)
-    
+
+def check_model_on_task(file_name): 
+    _, _, _, _, X_test, Y_test = load_dataset(file_name)
+    X_test_30_mins = Y_test[:, :, :6, :]
+    Y_test_30_mins = Y_test[:, :, :6, :]
+    X_test_15_mins = Y_test[:, :, :3, :]
+    Y_test_15_mins = Y_test[:, :, :3, :]
+    # Load the best model (optional)
+    best_model = load_model("best_model.h5")
+
+    test_loss, test_accuracy, precision_score, recall_score = best_model.evaluate(X_test, Y_test)
+    print("60 mins result")
+    print(test_loss)
+    print(test_accuracy)
+    print(precision_score)
+    print(recall_score)
+
+    # change to 30 minutes
+    # Define a custom layer to reshape the output
+    # reshape_layer = Reshape((304, 6, 3))(best_model.output)
+
+    # Create a new model with the modified output shape
+    # modified_model = Model(inputs=best_model.input, outputs=reshape_layer)
+
+    # # Optionally, compile the model for training
+    # metrics=['accuracy',
+    #                 Precision(name='precision'),
+    #                 Recall(name='recall')]
+
+    # opt = Adam(learning_rate=0.001)
+    # modified_model.compile(optimizer=opt, loss='mean_squared_error', metrics=metrics)
+
+    # Make predictions on the test data
+    test_loss, test_accuracy, precision_score, recall_score = best_model.evaluate(X_test_30_mins, Y_test_30_mins)
+    print("30 mins result")
+    print(test_loss)
+    print(test_accuracy)
+    print(precision_score)
+    print(recall_score)
+
+     # change to 15 minutes
+    best_model.add(Dense(304 * 3 * 3), name='dense_15_mins')
+
+    metrics=['accuracy',
+                    Precision(name='precision'),
+                    Recall(name='recall')]
+
+    opt = Adam(learning_rate=0.001)
+    best_model.compile(optimizer=opt, loss='mean_squared_error', metrics=metrics)
+
+    # Make predictions on the test data
+    y_pred_2 = best_model.predict(X_test)
+    y_true_reshaped_2 = Y_test_15_mins.reshape(Y_test_15_mins.shape[0], -1)  # Flattening along axis 1
+
+    y_pred_reshaped_2 = y_pred_2.reshape(y_pred_2.shape[0], -1)  # Flattening along axis 1
+
+    # Calculate MSE
+    mse = mean_squared_error(y_true_reshaped_2, y_pred_reshaped_2)
+
+    # Print the MSE
+    print(f"Mean Squared Error (MSE) 15 mins prediction: {mse}")
+
+
 
 def show_training_result(history):
     train_perf = history.history[str('accuracy')]
@@ -187,24 +285,18 @@ def generate_image_dataset(file_name):
     df = pd.read_csv(file_name, header=None) 
     df = df.drop(df.columns[0:7], axis=1).reset_index(drop=True)
 
-    num_train_rows = 6048 # 21 days
-    num_val_rows = 576 # 2 days
-    num_test_rows = 2016 # 7 days
-
-    num_X = 180 # 1 day
-    num_Y = 12
 
     train_dataset = df.iloc[:, 0:num_train_rows].reset_index(drop=True)
     validate_dataset = df.iloc[:, num_train_rows:num_train_rows+num_val_rows].reset_index(drop=True)
     test_dataset = df.iloc[:, num_train_rows+num_val_rows:num_train_rows+num_val_rows+num_test_rows].reset_index(drop=True)
 
-    # Define the number of columns per row
-    columns_per_row = 192 # 8 time steps, 40 minutes
 
-    output_folder_X_train= 'output_folder_X_train'
-    output_folder_Y_train = 'output_folder_Y_train'
-    output_folder_X_val = 'output_folder_X_val'
-    output_folder_Y_val = 'output_folder_Y_val'
+    output_folder_X_train= 'output_folder_X_train_' + file_name
+    output_folder_Y_train = 'output_folder_Y_train_' + file_name
+    output_folder_X_val = 'output_folder_X_val_' + file_name
+    output_folder_Y_val = 'output_folder_Y_val_' + file_name
+    output_folder_X_test = 'output_folder_X_test_' + file_name
+    output_folder_Y_test = 'output_folder_Y_test_' + file_name
 
     if not os.path.exists(output_folder_X_train):
         os.makedirs(output_folder_X_train)
@@ -218,6 +310,11 @@ def generate_image_dataset(file_name):
     if not os.path.exists(output_folder_Y_val):
         os.makedirs(output_folder_Y_val)
 
+    if not os.path.exists(output_folder_X_test):
+        os.makedirs(output_folder_X_test)
+
+    if not os.path.exists(output_folder_Y_test):
+        os.makedirs(output_folder_Y_test)
 
     # train dataset
     for start_column in range(0, len(train_dataset.columns), columns_per_row):
@@ -237,6 +334,7 @@ def generate_image_dataset(file_name):
         file_name = 'dataset_Y_train' + str(end_column_test) + '.png'
         img_train_Y.save(os.path.join(output_folder_Y_train, file_name))
     
+    # val dataset
     for start_column in range(0, len(validate_dataset.columns), columns_per_row):
         end_column_train = start_column + num_X
         end_column_test = end_column_train + num_Y
@@ -254,8 +352,26 @@ def generate_image_dataset(file_name):
         file_name = 'dataset_Y_val' + str(end_column_train) + '.png'
         img_train_Y.save(os.path.join(output_folder_Y_val, file_name))
 
+    # test dataset
+    for start_column in range(0, len(test_dataset.columns), columns_per_row):
+        end_column_train = start_column + num_X
+        end_column_test = end_column_train + num_Y
 
-    
+        X = df.iloc[:, start_column:end_column_train].to_numpy()
+        Y = df.iloc[:, end_column_train:end_column_test].to_numpy()
+
+        img_Val_X = Image.fromarray(np.uint8(X))
+        # Save the image(s) to the folder
+        file_name = 'dataset_X_test' + str(end_column_train) + '.png'
+        img_Val_X.save(os.path.join(output_folder_X_test, file_name))
+
+        img_train_Y = Image.fromarray(np.uint8(Y))
+        # Save the image(s) to the folder
+        file_name = 'dataset_Y_test' + str(end_column_train) + '.png'
+        img_train_Y.save(os.path.join(output_folder_Y_test, file_name))
+
 # show_image_representation(URBAN_CORE_CSV)
-train_cnn(URBAN_CORE_CSV)
+# train_cnn(URBAN_CORE_CSV)
 # generate_image_dataset(URBAN_CORE_CSV)
+
+check_model_on_task(URBAN_CORE_CSV)
