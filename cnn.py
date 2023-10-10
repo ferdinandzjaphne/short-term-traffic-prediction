@@ -20,8 +20,10 @@ num_test_rows = 2016 # 7 days
 num_X = 20 
 num_Y = 12
 
+road_segment = 1007
+
 # Define the number of columns per row
-columns_per_row = 32
+columns_per_row = num_X + num_Y
 
 
 def show_image_representation(file_name): 
@@ -115,9 +117,9 @@ def load_dataset(file_name):
     return np.array(X_train), np.array(Y_train), np.array(X_val), np.array(Y_val), np.array(X_test), np.array(Y_test)
 
 def train_cnn(file_name):
-    X_train, Y_train, X_val, Y_val, _, _ = load_dataset(file_name)
+    X_train, Y_train, X_val, Y_val, X_test, Y_test = load_dataset(file_name)
 
-    input_shape=(304,num_X,3)
+    input_shape=(road_segment,num_X,3)
 
     model = Sequential()
    
@@ -143,9 +145,9 @@ def train_cnn(file_name):
     model.add(Flatten())
 
     # Layer 8: Fully Connected Layer with output shape (304*2)
-    model.add(Dense(304 * num_Y * 3))
+    model.add(Dense(road_segment * num_Y * 3))
 
-    model.add(Reshape((304, num_Y, 3)))
+    model.add(Reshape((road_segment, num_Y, 3)))
 
     model.summary()
 
@@ -164,6 +166,16 @@ def train_cnn(file_name):
     print('best val loss: ', best_val_loss)
 
     model.save('best_model.h5')
+
+    # Load the best model (optional)
+    best_model = load_model("best_model.h5")
+
+    test_loss, test_accuracy, precision_score, recall_score = best_model.evaluate(X_test, Y_test)
+    print("15 mins result")
+    print(test_loss)
+    print(test_accuracy)
+    print(precision_score)
+    print(recall_score)
 
     show_training_result(history)
 
@@ -371,7 +383,6 @@ def generate_image_dataset(file_name):
         img_train_Y.save(os.path.join(output_folder_Y_test, file_name))
 
 # show_image_representation(URBAN_CORE_CSV)
-# train_cnn(URBAN_CORE_CSV)
-# generate_image_dataset(URBAN_CORE_CSV)
-
-check_model_on_task(URBAN_CORE_CSV)
+# generate_image_dataset(URBAN_MIX_CSV)
+train_cnn(URBAN_MIX_CSV)
+# check_model_on_task(URBAN_CORE_CSV)
