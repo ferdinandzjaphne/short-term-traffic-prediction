@@ -1,4 +1,3 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -48,7 +47,7 @@ model.add(Dense(1))
 model.compile(optimizer='adam', loss='mean_squared_error')
 
 # Train the model
-model.fit(X_train, y_train, epochs=10, batch_size=1)
+model.fit(X_train, y_train, epochs=1, batch_size=1)
 
 # Evaluate the model
 train_loss = model.evaluate(X_train, y_train, verbose=0)
@@ -64,11 +63,19 @@ y_test_pred = model.predict(X_test)
 y_train_pred = scaler.inverse_transform(y_train_pred)
 y_test_pred = scaler.inverse_transform(y_test_pred)
 
+print("sequence length: ",sequence_length)
+print("y_train_pred: ",len(y_train_pred))
+print("X_train: ",len(X_train))
+print("y_train: ",len(y_train))
+print("y_train_pred: ",len(X_test))
+print("y_test_pred: ",len(y_test_pred))
+print("data: ",len(data))
+
 # Visualize the results
-plt.plot(data, label='Actual Data', marker='o')
 plt.plot(range(sequence_length, sequence_length + len(y_train_pred)), y_train_pred, label='Training Predictions', marker='x')
-plt.plot(range(sequence_length + len(y_train_pred), sequence_length + len(data)), y_test_pred, label='Testing Predictions', marker='x')
+plt.plot(range(sequence_length + len(y_train_pred), sequence_length + len(y_train_pred) + len(y_test_pred)), y_test_pred, label='Testing Predictions', marker='x')
+plt.plot(range(0, len(data)), data, label='Actual Data', marker='o')
 plt.xlabel('Time Steps')
-plt.ylabel('Traffic Volume')
+plt.ylabel('Traffic Speed')
 plt.legend()
 plt.show()
