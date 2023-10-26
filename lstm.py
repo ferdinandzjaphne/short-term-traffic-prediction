@@ -13,8 +13,7 @@ df = pd.read_csv(URBAN_CORE_CSV, header=None)
 df = df.drop(df.columns[0:7], axis=1).reset_index(drop=True)
 df = df.iloc[:, 0:100]
     
-# data = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110])
-data = df.to_numpy().reshape(-1, 1)
+data_raw = df.to_numpy().reshape(-1, 1)
 
 # Sample ODC matrix (replace with your own data)
 # The ODC matrix is typically a 2D matrix where rows represent origins, and columns represent destinations.
@@ -26,7 +25,7 @@ data = df.to_numpy().reshape(-1, 1)
 
 # Data preprocessing
 scaler = MinMaxScaler()
-data = scaler.fit_transform(data)
+data = scaler.fit_transform(data_raw)
 
 X, y = [], []
 sequence_length = 100  # Adjust for your specific use case
@@ -63,18 +62,10 @@ y_test_pred = model.predict(X_test)
 y_train_pred = scaler.inverse_transform(y_train_pred)
 y_test_pred = scaler.inverse_transform(y_test_pred)
 
-print("sequence length: ",sequence_length)
-print("y_train_pred: ",len(y_train_pred))
-print("X_train: ",len(X_train))
-print("y_train: ",len(y_train))
-print("y_train_pred: ",len(X_test))
-print("y_test_pred: ",len(y_test_pred))
-print("data: ",len(data))
-
 # Visualize the results
+plt.plot(range(0, len(data_raw)), data_raw, label='Actual Data', marker='o')
 plt.plot(range(sequence_length, sequence_length + len(y_train_pred)), y_train_pred, label='Training Predictions', marker='x')
 plt.plot(range(sequence_length + len(y_train_pred), sequence_length + len(y_train_pred) + len(y_test_pred)), y_test_pred, label='Testing Predictions', marker='x')
-plt.plot(range(0, len(data)), data, label='Actual Data', marker='o')
 plt.xlabel('Time Steps')
 plt.ylabel('Traffic Speed')
 plt.legend()
