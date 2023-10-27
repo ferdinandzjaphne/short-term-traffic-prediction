@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import pandas as pd
 from main import URBAN_MIX_CSV, URBAN_CORE_CSV, ADJ_URBAN_CORE_CSV, ADJ_URBAN_MIX_CSV
@@ -8,12 +9,16 @@ from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import LSTM, Dense
 
-def lstm_training(file_name, prediction_timestep, loss_function, epoch, dataset_length, batch_size):
+def asd():
+    print("test")
+
+def lstm_training(file_name, prediction_timestep, loss_function, epoch, dataset_length, batch_size, plot_file_name):
     # Sample traffic data (replace with your own dataset)
     # This is a simplified example with a single feature (traffic volume)
     df = pd.read_csv(URBAN_CORE_CSV, header=None) 
     df = df.drop(df.columns[0:7], axis=1).reset_index(drop=True)
-    df = df.iloc[:, 0:dataset_length]
+    if dataset_length != 0:
+        df = df.iloc[:, 0:dataset_length]
         
     data_raw = df.to_numpy().reshape(-1, 1)
 
@@ -75,7 +80,6 @@ def lstm_training(file_name, prediction_timestep, loss_function, epoch, dataset_
     ax1.set_xlabel('Time Steps')
     ax1.set_ylabel('Traffic Speed')
     ax1.legend()
-    # ax1.savefig("lstm-plot.png")
 
     ax2 = fig.add_subplot(2, 2, 2)  # 2 rows, 2 columns, subplot 2
 
@@ -91,9 +95,15 @@ def lstm_training(file_name, prediction_timestep, loss_function, epoch, dataset_
     ax2.set_ylabel('MSE')
     ax2.set_title('Training Mean Squared Error')
     ax2.legend()
-    fig.savefig("lstm-plot.png")
-
-
+    fig.savefig(plot_file_name)
+    plt.show()
 
 # if __name__ == "__main__":
-lstm_training(URBAN_CORE_CSV, 100, "mean_squared_error", 1, 100, 10)
+# 15 minutes
+lstm_training(URBAN_CORE_CSV, 3, "mean_squared_error", 20, 0, 100, "15_mins_mse_plot.png")
+
+# 30 minutes
+# lstm_training(URBAN_CORE_CSV, 6, "mean_squared_error", 20, 100, 100, "30_mins_mse_plot.png")
+
+# # 60 minutes
+# lstm_training(URBAN_CORE_CSV, 12, "mean_squared_error", 20, 100, 100, "60_mins_mse_plot.png")
