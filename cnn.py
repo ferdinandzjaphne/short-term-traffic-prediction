@@ -381,8 +381,8 @@ def generate_image_dataset(file_name):
         # Save the image(s) to the folder
         file_name = 'dataset_Y_test' + str(end_column_train) + '.png'
         img_train_Y.save(os.path.join(output_folder_Y_test, file_name))
-
-# show_image_representation(URBAN_CORE_CSV)
-# generate_image_dataset(URBAN_MIX_CSV)
-train_cnn(URBAN_MIX_CSV)
-# check_model_on_task(URBAN_CORE_CSV)
+if __name__ == "__main__":
+    # show_image_representation(URBAN_CORE_CSV)
+    # generate_image_dataset(URBAN_MIX_CSV)
+    train_cnn(URBAN_MIX_CSV)
+    # check_model_on_task(URBAN_CORE_CSV)
