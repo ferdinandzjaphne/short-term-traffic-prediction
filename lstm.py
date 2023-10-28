@@ -9,13 +9,13 @@ from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import LSTM, Dense
 
-def asd():
-    print("test")
+def mean_relative_error(y_true, y_pred):
+    return K.abs((y_true - y_pred) / y_true)
 
-def lstm_training(file_name, prediction_timestep, loss_function, epoch, dataset_length, batch_size, plot_file_name):
+def lstm_training(file_name, prediction_timestep, epoch, dataset_length, batch_size, plot_file_name):
     # Sample traffic data (replace with your own dataset)
     # This is a simplified example with a single feature (traffic volume)
-    df = pd.read_csv(URBAN_CORE_CSV, header=None) 
+    df = pd.read_csv(file_name, header=None) 
     df = df.drop(df.columns[0:7], axis=1).reset_index(drop=True)
     if dataset_length != 0:
         df = df.iloc[:, 0:dataset_length]
@@ -47,21 +47,36 @@ def lstm_training(file_name, prediction_timestep, loss_function, epoch, dataset_
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
     
     metrics=['accuracy']
+    loss_functions = ['mean_absolute_error', 'mean_squared_error', mean_relative_error]
 
-    # Build the LSTM model
-    model = Sequential()
-    model.add(LSTM(50, activation='relu', input_shape=(sequence_length, 1)))
-    model.add(Dense(1))
-    model.compile(optimizer='adam', loss='mean_squared_error', metrics=metrics)
+    # Create a list to store loss values for each function
+    loss_values = []
 
-    # Train the model
-    history = model.fit(X_train, y_train, epochs=epoch, batch_size=batch_size)
+    # Create lists to store training and testing loss for each function
+    train_loss_values = []
+    test_loss_values = []
+    
+    # Loop over the loss functions
+    for loss_function in loss_functions:
+        # Build the LSTM model
+        model = Sequential()
+        model.add(LSTM(50, activation='relu', input_shape=(sequence_length, 1)))
+        model.add(Dense(1))
+        model.compile(optimizer='adam', loss='mean_squared_error', metrics=metrics)
 
-    # Evaluate the model
-    train_loss = model.evaluate(X_train, y_train, verbose=0)
-    test_loss = model.evaluate(X_test, y_test, verbose=0)
-    print('Training Loss:',train_loss)
-    print('Testing Loss:', test_loss)
+        # Train the model
+        history = model.fit(X_train, y_train, epochs=epoch, batch_size=batch_size, validation_data=(X_test, y_test))
+
+        # Evaluate the model
+        train_loss = model.evaluate(X_train, y_train, verbose=0)
+        test_loss = model.evaluate(X_test, y_test, verbose=0)
+        print('Training Loss:',train_loss)
+        print('Testing Loss:', test_loss)
+
+        train_loss = history.history['loss'][-1]
+        test_loss = history.history['val_loss'][-1]
+
+        loss_values.append([train_loss, test_loss])
 
     # Make predictions
     y_train_pred = model.predict(X_train)
@@ -79,31 +94,33 @@ def lstm_training(file_name, prediction_timestep, loss_function, epoch, dataset_
     ax1.plot(range(sequence_length + len(y_train_pred), sequence_length + len(y_train_pred) + len(y_test_pred)), y_test_pred, label='Testing Predictions', marker='x')
     ax1.set_xlabel('Time Steps')
     ax1.set_ylabel('Traffic Speed')
+    ax1.set_title('Prediction Plot')
     ax1.legend()
 
     ax2 = fig.add_subplot(2, 2, 2)  # 2 rows, 2 columns, subplot 2
+    print(loss_values)
+    # Create a boxplot to compare the loss values
+    boxplot = ax2.boxplot(loss_values, patch_artist=True)
+    ax2.set_ylabel('Loss Value')
+    ax2.set_title('Comparison of Train and Test Loss Values')
 
-    # Access the MSE values from the training history
-    mse_values = history.history['loss']  # Change 'loss' to the appropriate metric name if needed
-    print(mse_values)
+    # Set the labels for the box plot
+    ax2.set_xlabel('MAE', 'MSE', 'MRE')
 
-    # Plot the MSE values
-    epochs = range(1, len(mse_values) + 1)
+    # Set colors for the box plots (optional)
+    colors = ['lightblue', 'lightblue', 'lightgreen', 'lightgreen', 'lightcoral', 'lightcoral']
+    for patch, color in zip(boxplot['boxes'], colors):
+        patch.set_facecolor(color)
 
-    ax2.plot(epochs, mse_values, 'b', label='Training MSE')
-    ax2.set_xlabel('Epochs')
-    ax2.set_ylabel('MSE')
-    ax2.set_title('Training Mean Squared Error')
-    ax2.legend()
-    fig.savefig(plot_file_name)
     plt.show()
 
-# if __name__ == "__main__":
-# 15 minutes
-lstm_training(URBAN_CORE_CSV, 3, "mean_squared_error", 20, 0, 100, "15_mins_mse_plot.png")
 
-# 30 minutes
-# lstm_training(URBAN_CORE_CSV, 6, "mean_squared_error", 20, 100, 100, "30_mins_mse_plot.png")
+if __name__ == "__main__":
+    # 15 minutes
+    lstm_training(URBAN_CORE_CSV, 3, 10, 3, 100, "core_15_mins_plot.png")
 
-# # 60 minutes
-# lstm_training(URBAN_CORE_CSV, 12, "mean_squared_error", 20, 100, 100, "60_mins_mse_plot.png")
+    # 30 minutes
+    lstm_training(URBAN_CORE_CSV, 6, 1, 100, 100, "core_30_mins_mse_plot.png")
+
+    # # 60 minutes
+    lstm_training(URBAN_CORE_CSV, 12, 1, 100, 100, "core_60_mins_mse_plot.png")
