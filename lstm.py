@@ -105,7 +105,7 @@ def lstm_training(file_name, prediction_timestep, epoch, dataset_length, batch_s
     ax2.set_title('Comparison of Train and Test Loss Values')
 
     # Set the labels for the box plot
-    ax2.set_xlabel('MAE', 'MSE', 'MRE')
+    # ax2.set_xlabel('MAE', 'MSE', 'MRE')
 
     # Set colors for the box plots (optional)
     colors = ['lightblue', 'lightblue', 'lightgreen', 'lightgreen', 'lightcoral', 'lightcoral']
@@ -117,10 +117,10 @@ def lstm_training(file_name, prediction_timestep, epoch, dataset_length, batch_s
 
 if __name__ == "__main__":
     # 15 minutes
-    lstm_training(URBAN_CORE_CSV, 3, 10, 3, 100, "core_15_mins_plot.png")
+    lstm_training(URBAN_CORE_CSV, 3, 1, 100, 100, "core_15_mins_plot.png")
 
     # 30 minutes
-    lstm_training(URBAN_CORE_CSV, 6, 1, 100, 100, "core_30_mins_mse_plot.png")
+    lstm_training(URBAN_CORE_CSV, 6, 50, 0, 100, "core_30_mins_mse_plot.png")
 
-    # # 60 minutes
-    lstm_training(URBAN_CORE_CSV, 12, 1, 100, 100, "core_60_mins_mse_plot.png")
+    # 60 minutes
+    lstm_training(URBAN_CORE_CSV, 12, 50, 0, 100, "core_60_mins_mse_plot.png")
