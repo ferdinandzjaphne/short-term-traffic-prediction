@@ -8,6 +8,8 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import LSTM, Dense
+import pickle
+
 
 def mean_relative_error(y_true, y_pred):
     return K.abs((y_true - y_pred) / y_true)
@@ -112,15 +114,22 @@ def lstm_training(file_name, prediction_timestep, epoch, dataset_length, batch_s
     for patch, color in zip(boxplot['boxes'], colors):
         patch.set_facecolor(color)
 
-    plt.show()
+    # plt.show()
+    plt.savefig(plot_file_name + ".png")
 
+    pickle.dump(fig, open(plot_file_name + '.fig.pickle', 'wb')) # T
+
+def show_plot():
+    figx = pickle.load(open('core_15_mins_plot.fig.pickle', 'rb'))
+
+    figx.show() # Show the figure, edit it, etc.!
 
 if __name__ == "__main__":
     # 15 minutes
-    lstm_training(URBAN_CORE_CSV, 3, 1, 100, 100, "core_15_mins_plot.png")
+    lstm_training(URBAN_MIX_CSV, 3, 50, 0, 1000, "core_15_mins_plot")
 
     # 30 minutes
-    lstm_training(URBAN_CORE_CSV, 6, 50, 0, 100, "core_30_mins_mse_plot.png")
+    lstm_training(URBAN_MIX_CSV, 6, 50, 0, 1000, "core_30_mins_mse_plot")
 
     # 60 minutes
-    lstm_training(URBAN_CORE_CSV, 12, 50, 0, 100, "core_60_mins_mse_plot.png")
+    lstm_training(URBAN_MIX_CSV, 12, 50, 0, 1000, "core_60_mins_mse_plot")
