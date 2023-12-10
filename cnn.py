@@ -10,7 +10,7 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Reshap
 from tensorflow.keras.metrics import Precision, Recall
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import ModelCheckpoint
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, mean_squared_error
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, mean_squared_error, mean_absolute_percentage_error
 
 
 num_train_rows = 6048 # 21 days

@@ -87,8 +87,8 @@ def lstm_training(file_name, adj_file_name,  prediction_timestep, epoch, dataset
         # Evaluate the model
         train_loss = model.evaluate(X_train, y_train, verbose=0)
         test_loss = model.evaluate(X_test, y_test, verbose=0)
-        print('loss: ', loss_function, ' Training Loss:',train_loss)
-        print('loss: ', loss_function, 'Testing Loss:', test_loss)
+        print('module name: ', plot_file_name, 'loss: ', loss_function, ' Training Loss:',train_loss)
+        print('module name: ', plot_file_name,'loss: ', loss_function, 'Testing Loss:', test_loss)
 
         train_loss = history.history['loss'][-1]
         test_loss = history.history['val_loss'][-1]
@@ -149,10 +149,12 @@ def show_plot():
 if __name__ == "__main__":
     # show_plot()
     # 15 minutes
-    lstm_training(URBAN_CORE_CSV, ADJ_URBAN_CORE_CSV, 3, 50, 0, 1000, "core_15_mins_plot")
+    # lstm_training(URBAN_CORE_CSV, ADJ_URBAN_CORE_CSV, 6, 50, 0, 1000, "core_15_mins_plot")
 
     # # 30 minutes
-    # lstm_training(URBAN_MIX_CSV, 6, 50, 0, 1000, "core_30_mins_mse_plot")
+    lstm_training(URBAN_MIX_CSV, ADJ_URBAN_MIX_CSV, 12, 50, 0, 1000, "core_60_mins_mse_plot")
+    lstm_training(URBAN_MIX_CSV, ADJ_URBAN_MIX_CSV, 6, 50, 0, 1000, "core_30_mins_mse_plot")
+    lstm_training(URBAN_MIX_CSV, ADJ_URBAN_MIX_CSV, 3, 50, 0, 1000, "core_15_mins_mse_plot")
 
     # # 60 minutes
     # lstm_training(URBAN_MIX_CSV, 12, 50, 0, 1000, "core_60_mins_mse_plot")
