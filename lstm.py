@@ -9,12 +9,16 @@ from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import LSTM, Dense
 import pickle
+import keras.backend as K
 
 
 def mean_relative_error(y_true, y_pred):
     return K.abs((y_true - y_pred) / y_true)
 
-def lstm_training(file_name, prediction_timestep, epoch, dataset_length, batch_size, plot_file_name):
+def root_mean_squared_error(y_true, y_pred):
+    return K.sqrt(K.mean(K.square(y_pred - y_true))) 
+
+def lstm_training(file_name, adj_file_name,  prediction_timestep, epoch, dataset_length, batch_size, plot_file_name):
     # Sample traffic data (replace with your own dataset)
     # This is a simplified example with a single feature (traffic volume)
     df = pd.read_csv(file_name, header=None) 
@@ -24,17 +28,22 @@ def lstm_training(file_name, prediction_timestep, epoch, dataset_length, batch_s
         
     data_raw = df.to_numpy().reshape(-1, 1)
 
+    adj_df = pd.read_csv(adj_file_name, header=None) 
+
     # Sample ODC matrix (replace with your own data)
     # The ODC matrix is typically a 2D matrix where rows represent origins, and columns represent destinations.
-    # odc_matrix = np.array([[0, 10, 5], [15, 0, 8], [7, 12, 0]])
+    # odc_matrix = np.array(adj_df)
 
+    # odc_matrix_raw = adj_df.to_numpy().reshape(-1, 1)
+    
     # Data preprocessing
     # You can concatenate the ODC matrix with the traffic data
-    # data = np.concatenate((data, odc_matrix), axis=1)
+    # data_raw = np.concatenate((data_raw, odc_matrix_raw), axis=1)
 
     # Data preprocessing
     scaler = MinMaxScaler()
     data = scaler.fit_transform(data_raw)
+
 
     X, y = [], []
     sequence_length = prediction_timestep  # Adjust for your specific use case
@@ -49,7 +58,8 @@ def lstm_training(file_name, prediction_timestep, epoch, dataset_length, batch_s
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
     
     metrics=['accuracy']
-    loss_functions = ['mean_absolute_error', 'mean_squared_error', mean_relative_error]
+    # loss_functions = ['mean_absolute_error', 'mean_squared_error', mean_relative_error]
+    loss_functions = ['mean_absolute_percentage_error', 'mean_absolute_error', 'rmse']
 
     # Create a list to store loss values for each function
     loss_values = []
@@ -57,6 +67,7 @@ def lstm_training(file_name, prediction_timestep, epoch, dataset_length, batch_s
     # Create lists to store training and testing loss for each function
     train_loss_values = []
     test_loss_values = []
+
     
     # Loop over the loss functions
     for loss_function in loss_functions:
@@ -64,7 +75,11 @@ def lstm_training(file_name, prediction_timestep, epoch, dataset_length, batch_s
         model = Sequential()
         model.add(LSTM(50, activation='relu', input_shape=(sequence_length, 1)))
         model.add(Dense(1))
-        model.compile(optimizer='adam', loss='mean_squared_error', metrics=metrics)
+
+        if loss_function == 'rmse':
+            model.compile(optimizer='adam', loss=root_mean_squared_error, metrics=metrics)
+        else:
+            model.compile(optimizer='adam', loss=loss_function, metrics=metrics)
 
         # Train the model
         history = model.fit(X_train, y_train, epochs=epoch, batch_size=batch_size, validation_data=(X_test, y_test))
@@ -72,8 +87,8 @@ def lstm_training(file_name, prediction_timestep, epoch, dataset_length, batch_s
         # Evaluate the model
         train_loss = model.evaluate(X_train, y_train, verbose=0)
         test_loss = model.evaluate(X_test, y_test, verbose=0)
-        print('Training Loss:',train_loss)
-        print('Testing Loss:', test_loss)
+        print('loss: ', loss_function, ' Training Loss:',train_loss)
+        print('loss: ', loss_function, 'Testing Loss:', test_loss)
 
         train_loss = history.history['loss'][-1]
         test_loss = history.history['val_loss'][-1]
@@ -120,16 +135,24 @@ def lstm_training(file_name, prediction_timestep, epoch, dataset_length, batch_s
     pickle.dump(fig, open(plot_file_name + '.fig.pickle', 'wb')) # T
 
 def show_plot():
-    figx = pickle.load(open('core_15_mins_plot.fig.pickle', 'rb'))
+    with open('core_60_mins_mse_plot.fig.pickle', 'rb') as file:
+        loaded_plot = pickle.load(file)
+    
+    # Print the loaded plot
+    print(loaded_plot)  # This will print the plot object representation
 
-    figx.show() # Show the figure, edit it, etc.!
+    # Display the plot
+    loaded_plot.show()
+    
+    input("Press Enter to close the plot window...")
 
 if __name__ == "__main__":
+    # show_plot()
     # 15 minutes
-    lstm_training(URBAN_MIX_CSV, 3, 50, 0, 1000, "core_15_mins_plot")
+    lstm_training(URBAN_CORE_CSV, ADJ_URBAN_CORE_CSV, 3, 50, 0, 1000, "core_15_mins_plot")
 
-    # 30 minutes
-    lstm_training(URBAN_MIX_CSV, 6, 50, 0, 1000, "core_30_mins_mse_plot")
+    # # 30 minutes
+    # lstm_training(URBAN_MIX_CSV, 6, 50, 0, 1000, "core_30_mins_mse_plot")
 
-    # 60 minutes
-    lstm_training(URBAN_MIX_CSV, 12, 50, 0, 1000, "core_60_mins_mse_plot")
+    # # 60 minutes
+    # lstm_training(URBAN_MIX_CSV, 12, 50, 0, 1000, "core_60_mins_mse_plot")

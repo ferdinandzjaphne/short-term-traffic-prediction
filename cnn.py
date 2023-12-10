@@ -18,7 +18,7 @@ num_val_rows = 576 # 2 days
 num_test_rows = 2016 # 7 days
 
 num_X = 20 
-num_Y = 12
+num_Y = 3
 
 road_segment = 1007
 
@@ -240,6 +240,32 @@ def check_model_on_task(file_name):
     # Print the MSE
     print(f"Mean Squared Error (MSE) 15 mins prediction: {mse}")
 
+def show_images_in_folder(folder_path):
+    # Get a list of files in the folder
+    image_files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+    image_files = image_files[:9]
+
+    num_images = len(image_files)
+    num_cols = 3  # Number of columns in the plot
+    num_rows = (num_images // num_cols) + 1
+
+    plt.figure(figsize=(10, 8))
+
+    for i, image_file in enumerate(image_files):
+        image_path = os.path.join(folder_path, image_file)
+
+        # Open the image using PIL
+        img = Image.open(image_path)
+
+        plt.subplot(num_rows, num_cols, i + 1)
+        plt.imshow(img)
+        plt.title(image_file)
+        plt.axis('off')  # Hide axis
+
+    plt.tight_layout()
+    plt.show()
+
+
 
 
 def show_training_result(history):
@@ -383,6 +409,10 @@ def generate_image_dataset(file_name):
         img_train_Y.save(os.path.join(output_folder_Y_test, file_name))
 if __name__ == "__main__":
     # show_image_representation(URBAN_CORE_CSV)
-    # generate_image_dataset(URBAN_MIX_CSV)
-    train_cnn(URBAN_MIX_CSV)
+    # generate_image_dataset(URBAN_CORE_CSV)
+    # train_cnn(URBAN_MIX_CSV)
     # check_model_on_task(URBAN_CORE_CSV)
+
+    # Replace 'folder_path' with the path to your image folder
+    folder_path = 'output_folder_Y_test_urban-core.csv'
+    show_images_in_folder(folder_path)

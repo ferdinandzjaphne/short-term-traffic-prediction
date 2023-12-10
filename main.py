@@ -2,7 +2,8 @@ import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_percentage_error
+from math import sqrt
 
 # 8640 time step
 # 5 minute interval
@@ -13,10 +14,10 @@ from sklearn.metrics import mean_squared_error, r2_score
 # dataset starts from 12 AM april 1st to 11.55 PM of 30 April
 
 global URBAN_CORE_CSV, ADJ_URBAN_CORE_CSV, URBAN_MIX_CSV, ADJ_URBAN_MIX_CSV
-URBAN_CORE_CSV = 'urban-core.csv'
-ADJ_URBAN_CORE_CSV = 'Adj(urban-core).csv'
-URBAN_MIX_CSV = 'urban-mix.csv'
-ADJ_URBAN_MIX_CSV = 'Adj(urban-mix).csv'
+URBAN_CORE_CSV = 'dataset/urban-core.csv'
+ADJ_URBAN_CORE_CSV = 'dataset/Adj(urban-core).csv'
+URBAN_MIX_CSV = 'dataset/urban-mix.csv'
+ADJ_URBAN_MIX_CSV = 'dataset/Adj(urban-mix).csv'
 
 def data_highlight_graph():
     # read speed matrix data
@@ -96,6 +97,8 @@ def linear_regression(dataset_name):
 
     # Evaluate the model's performance
     mse = mean_squared_error(Y_test, Y_pred)
+    mape = mean_absolute_percentage_error(Y_test, Y_pred)
+    rms = sqrt(mean_squared_error(Y_test, Y_pred))
     r2 = r2_score(Y_test, Y_pred)
 
     # Print model information
@@ -103,6 +106,9 @@ def linear_regression(dataset_name):
     print("Coefficients:", model.coef_)
     print("Intercept:", model.intercept_)
     print("Mean Squared Error (MSE):", mse)
+    print("MAPE:", mape)
+    print("RMSE:", rms)
+    
     print("R-squared (R2):", r2)
 
     # Plot original dataset
